@@ -44,3 +44,278 @@ pip install selenium==3.14.0
 
 pip list
 =============================
+Установка драйвера для браузера: Windows
+Для установки откройте сайт https://sites.google.com/a/chromium.org/chromedriver/downloads и скачайте ту версию ChromeDriver, которая соответствует версии вашего браузера. Чтобы узнать версию браузера, откройте новое окно в Chrome, в поисковой строке наберите: chrome://version/ и нажмите Enter. В верхней строчке вы увидите информацию про версию браузера.
+
+Скачайте с сайта https://sites.google.com/a/chromium.org/chromedriver/downloads драйвер для вашей версии браузера. Разархивируйте скачанный файл.
+Создайте на диске C: папку chromedriver и положите разархивированный ранее файл chromedriver.exe в папку C:\chromedriver.
+Добавьте в системную переменную PATH папку C:\chromedriver. Как это сделать в разных версиях Windows, описано здесь: https://www.computerhope.com/issues/ch000549.htm. 
+Пример: как добавить путь в системную переменную PATH на Windows10
+
+1. Откройте настройки системы.
+
+2. В настройках откройте вкладку About, затем System info:
+
+
+
+3. Выберите Advanced system settings:
+
+
+
+4. Выберите Environment Variables:
+
+
+
+5. Кликните два раза на строчке Path в System variables:
+
+
+
+6. Нажмите кнопку New. Введите в новую строку путь к ChromeDriver — C:\chromedriver. Нажмите Enter. У вас должна появится строка с указанным путем:
+
+
+
+7. Если у вас была открыта командная строка Windows, не забудьте ее закрыть. Затем откройте новую командную строку, чтобы изменения переменной окружения стали доступны. Активируйте снова виртуальное окружение selenium_env, которое мы создали в предыдущих шагах.
+
+Давайте убедимся в том, что вебдрайвер установлен правильно. 
+
+Для начала проверим содержимое переменной path, для этого наберем в командной строке Path: 
+
+
+
+Ура, там есть папка с chromedriver! Попробуем вызвать его напрямую из командной строки: 
+
+
+
+Магия переменной path: хотя программа chromedriver находится где-то в другом каталоге, мы можем напрямую открывать её, используя имя chromedriver. Чтобы завершить процесс в консоли, нажмите Ctrl+C. 
+
+Знак на этом этапе, что пошло что-то не так: 
+
+
+
+В таком случае попробуйте перезапустить консоль, перезапустить компьютер, перепроверить и добавить заново по инструкциям папку с chromedriver в переменную path.
+
+Когда все получится, переходите к шагу https://stepik.org/lesson/25969/step/11, в котором мы запустим браузер с помощью Selenium WebDriver и выполним простые команды.
+
+========================================
+Финализаторы — закрываем браузер
+Вероятно, вы заметили, что мы не использовали в этом примере команду browser.quit(). Это привело к тому, что несколько окон браузера оставались открыты после окончания тестов, а закрылись только после завершения всех тестов. Закрытие браузеров произошло благодаря встроенной фикстуре — сборщику мусора. Но если бы количество тестов насчитывало больше нескольких десятков, то открытые окна браузеров могли привести к тому, что оперативная память закончилась бы очень быстро. Поэтому надо явно закрывать браузеры после каждого теста. Для этого мы можем воспользоваться финализаторами. Один из вариантов финализатора — использование ключевого слова Python: yield. После завершения теста, который вызывал фикстуру, выполнение фикстуры продолжится со строки, следующей за строкой со словом yield:
+
+test_fixture3.py
+
+import pytest
+from selenium import webdriver
+
+link = "http://selenium1py.pythonanywhere.com/"
+
+
+@pytest.fixture
+def browser():
+    print("\nstart browser for test..")
+    browser = webdriver.Chrome()
+    yield browser
+    # этот код выполнится после завершения теста
+    print("\nquit browser..")
+    browser.quit()
+
+
+class TestMainPage1():
+    # вызываем фикстуру в тесте, передав ее как параметр
+    def test_guest_should_see_login_link(self, browser):
+        browser.get(link)
+        browser.find_element_by_css_selector("#login_link")
+
+    def test_guest_should_see_basket_link_on_the_main_page(self, browser):
+        browser.get(link)
+        browser.find_element_by_css_selector(".basket-mini .btn-group > a")
+Есть альтернативный способ вызова teardown кода с помощью встроенной фикстуры request и ее метода addfinalizer. Можете изучить его сами по документации PyTest. 
+https://docs.pytest.org/en/latest/how-to/fixtures.html#adding-finalizers-directly
+Рекомендуем также выносить очистку данных и памяти в фикстуру, вместо того чтобы писать это в шагах теста: финализатор выполнится даже в ситуации, когда тест упал с ошибкой. 
+
+=====================================================
+Область видимости scope
+Для фикстур можно задавать область покрытия фикстур. Допустимые значения: “function”, “class”, “module”, “session”. Соответственно, фикстура будет вызываться один раз для тестового метода, один раз для класса, один раз для модуля или один раз для всех тестов, запущенных в данной сессии. 
+
+Запустим все наши тесты из класса TestMainPage1 в одном браузере для экономии времени, задав scope="class" в фикстуре browser:
+
+test_fixture5.py
+
+import pytest
+from selenium import webdriver
+
+link = "http://selenium1py.pythonanywhere.com/"
+
+
+@pytest.fixture(scope="class")
+def browser():
+    print("\nstart browser for test..")
+    browser = webdriver.Chrome()
+    yield browser
+    print("\nquit browser..")
+    browser.quit()
+
+
+class TestMainPage1():
+
+    # вызываем фикстуру в тесте, передав ее как параметр
+    def test_guest_should_see_login_link(self, browser):
+        print("start test1")
+        browser.get(link)
+        browser.find_element_by_css_selector("#login_link")
+        print("finish test1")
+
+    def test_guest_should_see_basket_link_on_the_main_page(self, browser):
+        print("start test2")
+        browser.get(link)
+        browser.find_element_by_css_selector(".basket-mini .btn-group > a")
+        print("finish test2")
+Мы видим, что в данном примере браузер открылся один раз и тесты последовательно выполнились в этом браузере. Здесь мы проделали это в качестве примера, но мы крайне рекомендуем всё же запускать отдельный экземпляр браузера для каждого теста, чтобы повысить стабильность тестов. Фикстуры, которые занимают много времени для запуска и ресурсов (обычно это работа с базами данных), можно вызывать и один раз за сессию запуска тестов.
+===============================================
+Aleksey Bychutkin
+2 года назад
+Ссылка
+
+это получается если область видимости - класс, то фикстура вызвалась один раз, результат ее сохранился и использовался для всех методов класса, а если бы класса было бы 2 в файле, то фикстура вызвалась бы 2 раза, по разу на каждый класс, я правильно понял?
+
+ 5 
+
+Юлия Лях
+2 года назад
+Ссылка
+@Aleksey_Bychutkin, да, все так! 
+===========================================
+Автоиспользование фикстур
+При описании фикстуры можно указать дополнительный параметр autouse=True, который укажет, что фикстуру нужно запустить для каждого теста даже без явного вызова: 
+
+test_fixture_autouse.py
+
+import pytest
+from selenium import webdriver
+
+link = "http://selenium1py.pythonanywhere.com/"
+
+
+@pytest.fixture
+def browser():
+    print("\nstart browser for test..")
+    browser = webdriver.Chrome()
+    yield browser
+    print("\nquit browser..")
+    browser.quit()
+
+@pytest.fixture(autouse=True)
+def prepare_data():
+    print()
+    print("preparing some critical data for every test")
+
+
+class TestMainPage1():
+    def test_guest_should_see_login_link(self, browser):
+        # не передаём как параметр фикстуру prepare_data, но она все равно выполняется
+        browser.get(link)
+        browser.find_element_by_css_selector("#login_link")
+
+    def test_guest_should_see_basket_link_on_the_main_page(self, browser):
+        browser.get(link)
+        browser.find_element_by_css_selector(".basket-mini .btn-group > a")
+
+
+Попробуйте запустить этот код и увидите, что для каждого теста фикстура подготовки данных выполнилась без явного вызова. Нужно быть аккуратнее с этим параметром, потому что фикстура выполняется для всех тестов. Без явной необходимости автоиспользованием фикстур лучше не пользоваться. 
+
+Итог
+
+Вспомогательные функции — это очень мощная штука, которая решает много проблем при работе с автотестами. Основной плюс в том, что их удобно использовать в любых тестах без дублирования лишнего кода. 
+
+Дополнительные материалы про фикстуры, которые мы настоятельно советуем почитать, приведены ниже:
+
+https://habr.com/ru/company/yandex/blog/242795/
+
+https://docs.pytest.org/en/stable/fixture.html
+=======================================================================
+Надо отметить, что фикстуры по умолчанию имеют время существования scope=function. Это означает, что каждый запуск теста со своими параметрами вызывает новый экземпляр фикстуры.
+====================================================================
+@pytest.yield_fixture
+def socket():
+    _socket = s.socket(s.AF_INET, s.SOCK_STREAM)
+    yield _socket
+    _socket.close()
+    
+def test_server_connect(socket):
+    socket.connect(('localhost', 8081))
+    assert socket
+================================================
+@pytest.fixture(scope='module')
+def Server():
+    class Dummy:
+        host_port = 'localhost', 8081
+        uri = 'http://%s:%s/' % host_port
+    return Dummy
+
+
+def test_server_connect(socket, Server):
+    socket.connect(Server.host_port)
+    assert socket
+=======================================
+И нельзя использовать внутри фикстуры с высоким уровнем фикстуры с более низким значением scope=.
+
+Остерегайтесь использовать autouse фикстуры. Они опасны тем, что могут незаметно для вас изменить данные. Для гибкого их использования можно проверять наличие требуемой фикстуры для вызванного теста:
+
+@pytest.yield_fixture(scope='function', autouse=True)
+def collect_logs(request):
+    if 'Server' in request.fixturenames:
+        with some_logfile_collector(SERVER_LOCATION):
+            yield
+    else:
+        yield
+
+
+Кроме всего прочего, можно указывать фикстуры на тестовые классы. В следующем примере есть класс, в котором тесты меняют время на тестовом стенде. Например, нам нужно, чтобы после каждого теста время обновлялось на текущее. В следующем примере фикстура Service возвращает объект тестируемого сервиса и имеет метод set_time, с помощью которого можно изменить дату и время:
+
+@pytest.yield_fixture
+def reset_shifted_time(Service):
+    yield
+    Service.set_time(datetime.datetime.now())
+
+
+@pytest.mark.usefixtures("reset_shifted_time")
+class TestWithShiftedTime():
+    def test_shift_milesecond(self, Service):
+        Service.set_time()
+        assert ...
+    def test_shift_time_far_far_away(self, Service):
+        Service.set_time()
+        assert ...
+
+
+Обычно небольшие фикстуры, специфичные для какой-либо ситуации, описываются внутри тестового модуля. Но если фикстура становится популярна среди многих тест-сьютов, то ее обычно выносят в специальный для pytest файл: conftest.py. После того, как фикстура описана в данном файле, она становится видимой для всех тестов, и не нужно делать import.
+===========================================================
+Мы придерживаемся правила «В одном тесте — один assert». Оно позволяет тестировать определенную функциональность, не затрагивая шаги подготовки данных или приведение сервиса в нужное состояние. Если же в тесте используются шаги подготовки данных, которые могут вызвать ошибку, то лучше для них написать отдельный тест. Используя данную структуру, мы описываем ожидаемое поведение системы.
+
+Если была обнаружена ошибка, то от теста требуется человекочитаемый отчет о запуске. И с недавних пор pytest стал поддерживать очень информативные assert-ы. Советую вам использовать их, пока не потребуется что-то более сложное.
+
+Например, следующий тест:
+def test_dict():
+    assert dict(foo='bar', baz=None).items() == list({'foo': 'bar'}.iteritems())
+
+вернет развёрнутый ответ о том, где ошибка:
+E       assert [('foo', 'bar...('baz', None)] == [('foo', 'bar')]
+E         Left contains more items, first extra item: ('baz', None)
+
+
+В тесте, проверяющем наш Тестируемый сервер на Flask, перепишем проверку внутри метода test_server_connect для более точного определения, что мы не ожидаем определенный exception. Для этого воспользуемся фреймворком PyHamcrest:
+from hamcrest import *
+
+SOCKET_ERROR = s.error
+
+def test_server_connect(socket, Server):
+    assert_that(calling(socket.connect).with_args(Server.host_port), is_not(raises(SOCKET_ERROR)))
+
+
+PyHamcrest позволяет совмещать встроенные в него матчеры. Скомбинировав таким образом has_property и contains_string, получим удобные для использования простые матчеры:
+
+def has_content(item):
+    return has_property('text', item if isinstance(item, BaseMatcher) else contains_string(item))
+
+def has_status(status):
+    return has_property('status_code', equal_to(status))
+   =========================================
+                
