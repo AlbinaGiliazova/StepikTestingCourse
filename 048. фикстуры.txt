@@ -137,4 +137,12 @@ Andrei Chernomorov
 Понял. Это verbose - подробное описание!
 
 =====================================
+Использование фикстур в PyTest
+Фикстуры — определение https://en.wikipedia.org/wiki/Test_fixture#Software
+Фикстуры в PyTest https://docs.pytest.org/en/stable/fixture.html
+setup и teardown методы https://docs.pytest.org/en/stable/xunit_setup.html
+https://habr.com/ru/company/yandex/blog/242795/
+https://medium.com/@dmrlx/%D0%B2%D0%B2%D0%B5%D0%B4%D0%B5%D0%BD%D0%B8%D0%B5-%D0%B2-pytest-cc6175c7d0dc
+Skip and xfail: dealing with tests that cannot succeed https://pytest.org/en/stable/skipping.html
+
         

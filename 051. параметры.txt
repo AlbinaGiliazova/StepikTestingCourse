@@ -43,3 +43,4 @@ class TestLogin:
 Дополнительно, полезный туториал из документации: Parametrizing fixtures and test functions
 https://docs.pytest.org/en/latest/how-to/parametrize.html?highlight=parametrize
 =========================================================================
+Parametrizing fixtures and test functions https://docs.pytest.org/en/stable/parametrize.html

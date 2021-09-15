@@ -88,4 +88,4 @@ def browser(request):
     print("\nquit browser..")
     browser.quit()
 =============================================================
-    
+Передача параметров в PyTest из командной строки https://docs.pytest.org/en/stable/example/simple.html?highlight=addoption    

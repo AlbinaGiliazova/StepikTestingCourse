@@ -23,3 +23,6 @@ driver.get("https://stepik.org/lesson/25969/step/8")
 
 selenium.common.exceptions.WebDriverException: Message: 'geckodriver' executable needs to be in PATH. 
 значит, geckodriver не установлен или к нему не прописан путь в системе. Повторите заново действия по установке. Если Firefox всё равно не запускается, то напишите в комментариях последовательность ваших действий и подробный лог ошибки, чтобы мы могли вам помочь.
+
+=============
+Инструкции по установке geckodriver https://selenium-python.com/install-geckodriver
